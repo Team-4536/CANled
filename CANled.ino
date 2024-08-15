@@ -48,10 +48,27 @@ void setup1() {
 // the loop function runs over and over again forever
 static int hue = 0;
 
+void flash() {
+
+}
+
 void loop1() {
-  neopixel.rainbow(hue);
-  neopixel.show();
-  hue = (hue + 64) & 0xffffff;
+  uint32_t apiClass;
+  if (!rp2040.fifo.pop_nb(&apiClass)) {
+    return;
+  }
+  uint32_t index = rp2040.fifo.pop();
+  uint32_t data1 = rp2040.fifo.pop();
+  uint32_t data2 = rp2040.fifo.pop();
+
+  Serial.print(apiClass, HEX);
+  Serial.print('|');
+  Serial.print(index, HEX);
+  Serial.print('|');
+  Serial.print(data1, HEX);
+  Serial.print('|');
+  Serial.print(data2, HEX);
+  Serial.println();
 }
 
 void rx(int available) {
@@ -64,7 +81,7 @@ void rx(int available) {
   int mfg = CANID_MFG(id);
   int devType = CANID_TYPE(id);
 
-  if (false && devType == 1) {
+  if (devType != 10 || mfg != 8) {
     return;
   }
 
@@ -75,22 +92,40 @@ void rx(int available) {
     Serial.print("[R]");
   }
 
-  Serial.print(devType, DEC);
-  Serial.print(":");
-  Serial.print(mfg, DEC);
-  Serial.print("/");
-  Serial.print(apiClass, DEC);
-  Serial.print(":");
-  Serial.print(index, DEC);
-  Serial.print("@");
-  Serial.print(devNum, DEC);
+  // Serial.print(devType, DEC);
+  // Serial.print(":");
+  // Serial.print(mfg, DEC);
+  // Serial.print("/");
+  // Serial.print(apiClass, DEC);
+  // Serial.print(":");
+  // Serial.print(index, DEC);
+  // Serial.print("@");
+  // Serial.print(devNum, DEC);
 
-  Serial.print(" -> ");
+  // Serial.print(" -> ");
 
+  // uint32_t apiId = apiClass << 4 | index;
+  // rp2040.fifo.push(apiId);
+
+  rp2040.fifo.push(apiClass);
+  rp2040.fifo.push(index);
+
+  char data[8];
+  int i = 0;
   while (mcp.available()) {
-    Serial.print((char)mcp.read(), HEX);
+    int dataByte = mcp.read();
+
+    // Serial.print((char)dataByte, HEX);
+
+    data[i++] = dataByte;
   }
-  Serial.println();
+
+  uint32_t *splitData = (uint32_t *)&data;
+
+  rp2040.fifo.push(splitData[0]);
+  rp2040.fifo.push(splitData[1]);
+
+  // Serial.println();
 
   digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
 }
