@@ -18,6 +18,8 @@
 #define CANID_INDEX(id) ((id >> 6) & 0xf)
 #define CANID_DEVICE(id) (id & 0x3f)
 
+#define LED_COUNT 100
+
 Adafruit_MCP2515 mcp(CS_PIN);
 Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
@@ -72,6 +74,30 @@ bool TimerHandler(struct repeating_timer *t) {
   return true;
 }
 
+uint32_t getColor(int colorId) {
+  switch (colorId) {
+    case 0: // Red
+      return neopixel.Color(255, 0, 0);
+    case 1: // Green
+      return neopixel.Color(0, 255, 0);
+    case 2: // Blue
+      return neopixel.Color(0, 0, 255);
+    case 3: // Yellow
+      return neopixel.Color(255, 255, 0);
+    case 4: // Cyan
+      return neopixel.Color(0, 255, 255);
+    case 5: // Magenta
+      return neopixel.Color(255, 0, 255);
+    case 6: // White
+      return neopixel.Color(255, 255, 255);
+    case 7: // Off
+      return neopixel.Color(0, 0, 0);
+    default:
+      Serial.println("Warning: Invalid colorId given. Valid colors are between 0 and 7");
+      return neopixel.Color(0, 0, 0);
+  }
+}
+
 // the setup function runs once when you press reset or power the board
 void setup1() {
   //pinMode(LED_BUILTIN, OUTPUT);
@@ -108,27 +134,37 @@ void setup1() {
 
 static int hue = 0;
 
-void flash() {
-
-}
-
 void loop1() {
-  uint32_t apiClass;
-  if (!rp2040.fifo.pop_nb(&apiClass)) {
+  uint32_t funcId;
+  if (!rp2040.fifo.pop_nb(&funcId)) {
     return;
   }
   uint32_t index = rp2040.fifo.pop();
-  uint32_t data1 = rp2040.fifo.pop();
-  uint32_t data2 = rp2040.fifo.pop();
+  uint32_t argList1 = rp2040.fifo.pop();
+  uint32_t argList2 = rp2040.fifo.pop();
 
-  Serial.print(apiClass, HEX);
-  Serial.print('|');
-  Serial.print(index, HEX);
-  Serial.print('|');
-  Serial.print(data1, HEX);
-  Serial.print('|');
-  Serial.print(data2, HEX);
-  Serial.println();
+  uint32_t colorId = argList1 & 0x7;
+  Serial.println(colorId);
+  uint32_t color = getColor((int)colorId);
+
+  switch (funcId) {
+    case 0:
+      neopixel.fill(color, 0 LED_COUNT);
+      break;
+    case 1: 
+      neopixel.fill(color, 0 LED_COUNT);
+      break;
+    case 2:
+      neopixel.fill(color, 0 LED_COUNT);
+      break;
+    case 3:
+      neopixel.fill(color, 0 LED_COUNT);
+      break;
+    default:
+      neopixel.clear();
+      break;
+  }
+  neopixel.show();
 }
 
 void rx(int available) {
@@ -141,7 +177,7 @@ void rx(int available) {
   int mfg = CANID_MFG(id);
   int devType = CANID_TYPE(id);
 
-  if (devType != 10 || mfg != 8) {
+  if (devType != 10 || mfg != 8 || devNum != 0) {
     return;
   }
 
@@ -180,7 +216,7 @@ void rx(int available) {
     data[i++] = dataByte;
   }
 
-  uint32_t *splitData = (uint32_t *)&data;
+  uint32_t *splitData = (uint32_t *) & data;
 
   rp2040.fifo.push(splitData[0]);
   rp2040.fifo.push(splitData[1]);
