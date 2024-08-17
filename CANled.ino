@@ -1,6 +1,9 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
 
+#include "src/solid.h"
+
+#include <RPi_Pico_TimerInterrupt.h>
 
 #define CS_PIN PIN_CAN_CS
 #define CAN_BAUDRATE (1000000)
@@ -23,6 +26,32 @@ void setup() {
 }
 
 void loop() {
+  // intentionally void
+}
+
+RPI_PICO_Timer ITimer(0);
+Stack stack(10);
+Solid red(stack.getSize(), Pixel(128));
+Solid blue(stack.getSize(), Pixel(0,0,128));
+
+bool TimerHandler(struct repeating_timer *t) {
+  red.setStart((red.getStart() + 1) % red.getSize());
+  red.setEnd((red.getEnd() + 1) % red.getSize());
+  blue.setStart((blue.getStart() + 1) % blue.getSize());
+  blue.setEnd((blue.getEnd() + 1) % blue.getSize());
+  for (int i = 0; i < stack.getSize(); i++) {
+    Pixel c = stack.get(i);
+    uint8_t a = c.getAlpha();
+
+    if (a > 0) {
+      neopixel.setPixelColor(i, c.getRed(), c.getGreen(), c.getBlue(), c.getWhite());
+    } else {
+      neopixel.setPixelColor(i, 0, 0, 0);
+    }
+  }
+  neopixel.show();
+  Serial.println();
+  return true;
 }
 
 // the setup function runs once when you press reset or power the board
@@ -40,9 +69,22 @@ void setup1() {
   Serial.println("MCP2515 chip found");
 
   neopixel.begin();
+  neopixel.setBrightness(20);
   neopixel.clear();
   neopixel.show();
-  neopixel.setBrightness(20);
+
+  red.setStart(0);
+  red.setEnd(5);
+
+  blue.setStart(5);
+  blue.setEnd(10);
+
+  stack.Push(&red);
+  stack.Push(&blue);
+
+  if (ITimer.attachInterrupt(5, TimerHandler)) {
+    Serial.println("set up timer");
+  }
 }
 
 // the loop function runs over and over again forever
