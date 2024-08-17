@@ -143,23 +143,49 @@ void loop1() {
   uint32_t argList1 = rp2040.fifo.pop();
   uint32_t argList2 = rp2040.fifo.pop();
 
-  uint32_t colorId = argList1 & 0x7;
-  Serial.println(colorId);
-  uint32_t color = getColor((int)colorId);
+  int colorId = argList1 & 0x7;
+  uint32_t color;
+  if (colorId 0= 7) {
+    uint8_t r = (argList1 >> 8) & 0xFF;
+    uint8_t g = (argList1 >> 16) & 0xFF;
+    uint8_t b = (argList1 >> 24) & 0xFF;
+    color = neopixel.Color(r, g, b);
+  } else {
+    color = getColor(colorId);
+  }
 
   switch (funcId) {
-    case 0:
-      neopixel.fill(color, 0 LED_COUNT);
+    case 0: // set color
+      neopixel.fill(color, 0, LED_COUNT);
       break;
-    case 1: 
-      neopixel.fill(color, 0 LED_COUNT);
+    case 1: // turn off LEDs
+      neopixel.clear(); // probably eventually use case 0 and use getColor(7) for the color
       break;
-    case 2:
-      neopixel.fill(color, 0 LED_COUNT);
+    case 2: // rotate or bounce color
       break;
-    case 3:
-      neopixel.fill(color, 0 LED_COUNT);
+    case 3: // rotate a rainbow color
       break;
+    case 4: // flash color
+      break;
+    case 5: // pulse color
+      break;
+    case 10: { // test communications
+      Serial.println("Testing Communications...");
+
+      int value1 = argList1 & 0x7;
+      int value2 = (argList1 >> 3) & 0x1F;
+      int value3 = (argList1 >> 8) & 0x3FFF;
+      int value4 = (argList1 >> 22) & 0x7F;
+      int value5 = ((argList1 >> 31) & 0x1) | ((argList2 & 0xFF) << 1);
+      int value6 = (argList2 >> 16) & 0x3FFF;
+
+      Serial.println("Expected Values: 5 - 12 - 12345 - 55 - 400 - 13333");
+      Serial.println("Received Values: " + String(value1) + " - " + String(value2) +
+                                   " - " + String(value3) + " - " + String(value4) +
+                                   " - " + String(value5) + " - " + String(value6));
+      Serial.println("...Communications Are Functioning Properly.\n");
+      break;
+    }
     default:
       neopixel.clear();
       break;
@@ -188,18 +214,6 @@ void rx(int available) {
     Serial.print("[R]");
   }
 
-  // Serial.print(devType, DEC);
-  // Serial.print(":");
-  // Serial.print(mfg, DEC);
-  // Serial.print("/");
-  // Serial.print(apiClass, DEC);
-  // Serial.print(":");
-  // Serial.print(index, DEC);
-  // Serial.print("@");
-  // Serial.print(devNum, DEC);
-
-  // Serial.print(" -> ");
-
   // uint32_t apiId = apiClass << 4 | index;
   // rp2040.fifo.push(apiId);
 
@@ -211,8 +225,6 @@ void rx(int available) {
   while (mcp.available()) {
     int dataByte = mcp.read();
 
-    // Serial.print((char)dataByte, HEX);
-
     data[i++] = dataByte;
   }
 
@@ -220,8 +232,6 @@ void rx(int available) {
 
   rp2040.fifo.push(splitData[0]);
   rp2040.fifo.push(splitData[1]);
-
-  // Serial.println();
 
   digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
 }
