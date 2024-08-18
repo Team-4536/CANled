@@ -186,6 +186,12 @@ void loop1() {
       Serial.println("...Communications Are Functioning Properly.\n");
       break;
     }
+    case 11: { // config message printing
+
+    }
+    case 12: { // config function running
+
+    }
     default:
       neopixel.clear();
       break;
