@@ -25,6 +25,9 @@ Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
 Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
 
+printMessages: bool = false;
+runFunctions: bool = true;
+
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
 
@@ -143,9 +146,9 @@ void loop1() {
   uint32_t argList1 = rp2040.fifo.pop();
   uint32_t argList2 = rp2040.fifo.pop();
 
-  int colorId = argList1 & 0x7;
+  uint32_t colorId = argList1 & 0x7;
   uint32_t color;
-  if (colorId 0= 7) {
+  if (colorId == 7) {
     uint8_t r = (argList1 >> 8) & 0xFF;
     uint8_t g = (argList1 >> 16) & 0xFF;
     uint8_t b = (argList1 >> 24) & 0xFF;
@@ -153,6 +156,9 @@ void loop1() {
   } else {
     color = getColor(colorId);
   }
+
+  Serial.print("funcId: ");
+  Serial.println(funcId);
 
   switch (funcId) {
     case 0: // set color
@@ -169,7 +175,22 @@ void loop1() {
       break;
     case 5: // pulse color
       break;
-    case 10: { // test communications
+    case 10: { // config message printing
+      int boolean = argList1 & 0x1;
+      printMessages = (boolean == 1);
+      break;
+    }
+    case 11: { // config function running
+      int boolean = argList1 & 0x1;
+      runFunctions = (boolean == 1);
+      break;
+    }
+    case 20: { // set the brightness of the neopixel
+      uint8_t brightness = argList1 & 0xFF;
+      neopixel.setBrightness(brightness);
+      break;
+    }
+    case 30: { // test communications
       Serial.println("Testing Communications...");
 
       int value1 = argList1 & 0x7;
@@ -186,12 +207,8 @@ void loop1() {
       Serial.println("...Communications Are Functioning Properly.\n");
       break;
     }
-    case 11: { // config message printing
-
-    }
-    case 12: { // config function running
-
-    }
+    case 31: // test LEDs
+      break;
     default:
       neopixel.clear();
       break;
