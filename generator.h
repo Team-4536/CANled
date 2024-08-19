@@ -3,21 +3,30 @@
 #include "pixel.h"
 
 class Generator {
-  uint32_t size; // size of the strip
 protected:
-  uint32_t start; // start index
-  uint32_t end; // end index
-  unsigned long tick;
+  uint16_t size; // size of the strip
+  uint16_t start; // start index
+  uint16_t end; // end index
+
+  unsigned long world_time;
+  uint8_t speed_numerator;
+  uint16_t speed_denominator;
+  unsigned long local_time;
 public:
-  Generator(uint32_t size);
-  virtual uint32_t getSize();
-  virtual uint32_t getStart();
-  virtual uint32_t getEnd();
+  Generator(uint16_t size);
+  virtual uint16_t getSize();
 
-  virtual void setStart(uint32_t);
-  virtual void setEnd(uint32_t);
+  uint16_t getStart();
+  uint16_t getWidth();
+  uint16_t getEnd();
 
-  virtual void next();
+  void setStart(uint16_t);
+  void setWidth(uint16_t);
+  void setEnd(uint16_t);
+
+  virtual void setSpeed(uint8_t, uint16_t);
+
+  virtual bool next();
   virtual void reset();
-  virtual Pixel get(uint32_t index);
+  virtual Pixel get(uint16_t index);
 };

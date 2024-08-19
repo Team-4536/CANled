@@ -21,24 +21,41 @@
 Adafruit_MCP2515 mcp(CS_PIN);
 Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
+Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
+
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
+
+  pinMode(NEOPIXEL_POWER, OUTPUT);
+  digitalWrite(NEOPIXEL_POWER, HIGH);
+
+  statuspix.begin();
+  statuspix.clear();
+  statuspix.show();
 }
 
 void loop() {
-  // intentionally void
+  if ((millis()/500)%2) {
+    statuspix.setPixelColor(0, 10,10,0);
+  } else {
+    statuspix.clear();
+  }
+  statuspix.show();
 }
 
 RPI_PICO_Timer ITimer(0);
 Stack stack(10);
-Solid red(stack.getSize(), Pixel(128));
+Chase red(stack.getSize(), Pixel(128));
+Chase green(stack.getSize(), PIXEL_GREEN);
 Solid blue(stack.getSize(), Pixel(0,0,128));
 
 bool TimerHandler(struct repeating_timer *t) {
+  /*
   red.setStart((red.getStart() + 1) % red.getSize());
   red.setEnd((red.getEnd() + 1) % red.getSize());
   blue.setStart((blue.getStart() + 1) % blue.getSize());
   blue.setEnd((blue.getEnd() + 1) % blue.getSize());
+  */
   for (int i = 0; i < stack.getSize(); i++) {
     Pixel c = stack.get(i);
     uint8_t a = c.getAlpha();
@@ -49,6 +66,7 @@ bool TimerHandler(struct repeating_timer *t) {
       neopixel.setPixelColor(i, 0, 0, 0);
     }
   }
+  stack.next();
   neopixel.show();
   Serial.println();
   return true;
@@ -69,25 +87,25 @@ void setup1() {
   Serial.println("MCP2515 chip found");
 
   neopixel.begin();
-  neopixel.setBrightness(20);
+  //neopixel.setBrightness(20);
   neopixel.clear();
   neopixel.show();
 
-  red.setStart(0);
-  red.setEnd(5);
+  red.setSpeed(5, 100);
+  green.setSpeed(10, 100);
 
   blue.setStart(5);
-  blue.setEnd(10);
+  blue.setWidth(1);
 
   stack.Push(&red);
+  stack.Push(&green);
   stack.Push(&blue);
 
-  if (ITimer.attachInterrupt(5, TimerHandler)) {
+  if (ITimer.attachInterrupt(100, TimerHandler)) {
     Serial.println("set up timer");
   }
 }
 
-// the loop function runs over and over again forever
 static int hue = 0;
 
 void flash() {

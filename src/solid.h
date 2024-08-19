@@ -8,8 +8,8 @@ class Solid : public Generator {
 protected:
   Pixel color;
 public:
-  Solid(uint32_t, Pixel);
-  Pixel get(uint32_t);
+  Solid(uint16_t, Pixel);
+  Pixel get(uint16_t);
 };
 
 
@@ -17,8 +17,17 @@ class Stack : public Solid {
 private:
   std::vector<Generator*> generators;
 public:
-  Stack(uint32_t, Pixel = PIXEL_CLEAR);
-  Pixel get(uint32_t);
+  Stack(uint16_t, Pixel = PIXEL_CLEAR);
+  Pixel get(uint16_t);
+  bool next();
   void Push(Generator*);
   void Pop();
+};
+
+class Chase : public Generator {
+protected:
+  Pixel color;
+public:
+  Chase(uint16_t, Pixel);
+  Pixel get(uint16_t);
 };

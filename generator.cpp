@@ -1,42 +1,70 @@
 #include <cstdint>
 #include "generator.h"
 
-Generator::Generator(uint32_t size) {
-  this->size = size;
-  this->end = size;
+Generator::Generator(uint16_t size) : size(size), end(size) {
+  speed_numerator = 1;
+  speed_denominator = 1;
 };
 
 void Generator::reset() {
-  tick = 0;
+  world_time = 0;
+  local_time = 0;
 }
 
-void Generator::next() {
-  tick++;
+bool Generator::next() {
+  world_time++;
+  int diff =
+    ( (world_time    * speed_numerator) / speed_denominator) -
+    (((world_time-1) * speed_numerator) / speed_denominator);
+
+  local_time += diff;
+
+  return (bool)diff;
 }
 
-Pixel Generator::get(uint32_t) {
+Pixel Generator::get(uint16_t) {
   return Pixel(0,0,0);
 }
 
-uint32_t Generator::getSize() {
+uint16_t Generator::getSize() {
   return size;
 }
 
-uint32_t Generator::getStart() {
+uint16_t Generator::getStart() {
   return start;
 }
 
-uint32_t Generator::getEnd() {
+uint16_t Generator::getWidth() {
+  if (start > end) {
+    return end + size - start;
+  } else {
+    return end - start;
+  }
+}
+
+uint16_t Generator::getEnd() {
   return end;
 }
 
-void Generator::setStart(uint32_t start) {
+void Generator::setStart(uint16_t start) {
   this->start = start;
 }
 
-void Generator::setEnd(uint32_t end) {
-  this->end = end;
+void Generator::setWidth(uint16_t width) {
+  if (width > size) {
+    width = size;
+  }
+  end = (start + width) % size;
 }
 
+void Generator::setEnd(uint16_t end) {
+  this->end = end > size ? size : end;
+}
 
-
+void Generator::setSpeed(uint8_t numerator, uint16_t denominator = 100) {
+  if (numerator > denominator) {
+    numerator = denominator;
+  }
+  speed_numerator = numerator;
+  speed_denominator = denominator;
+}
