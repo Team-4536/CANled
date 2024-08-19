@@ -49,6 +49,7 @@ void loop() {
 }
 
 RPI_PICO_Timer ITimer(0);
+
 Stack stack(100);
 Chase red(stack.getSize(), Pixel(128));
 Chase green(stack.getSize(), PIXEL_GREEN);
@@ -121,7 +122,7 @@ void setup1() {
   neopixel.show();
 
   red.setSpeed(5, 100);
-  green.setSpeed(10, 100);
+  green.setSpeed(50, 100);
 
   blue.setStart(5);
   blue.setWidth(1);

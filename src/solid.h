@@ -12,7 +12,6 @@ public:
   Pixel get(uint16_t);
 };
 
-
 class Stack : public Solid {
 private:
   std::vector<Generator*> generators;
@@ -24,10 +23,12 @@ public:
   void Pop();
 };
 
+
 class Chase : public Generator {
 protected:
   Pixel color;
+  bool bounce;
 public:
-  Chase(uint16_t, Pixel);
+  Chase(uint16_t, Pixel, bool = false);
   Pixel get(uint16_t);
 };

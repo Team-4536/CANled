@@ -52,12 +52,20 @@ void Stack::Pop() {
   }
 }
 
-Chase::Chase(uint16_t size, Pixel color) : Generator::Generator(size), color(color) {
+Chase::Chase(uint16_t size, Pixel color, bool bounce) : Generator::Generator(size), color(color), bounce(bounce) {
 }
 
 Pixel Chase::get(uint16_t index) {
   // could do some precalc in next()
-  uint16_t target = (start + (local_time % getWidth())) % size;
+  uint16_t w = getWidth();
+  uint16_t sel = local_time % w;
+  uint16_t target;
+
+  if (bounce && ((local_time / w) % 2 == 1)) {
+    target = (start + w - sel) % size;
+  } else {
+    target = (start + sel) % size;
+  }
 
   return target == index ? color : PIXEL_IGNORE;
 }
