@@ -1,6 +1,9 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
 
+#include "src/solid.h"
+
+#include <RPi_Pico_TimerInterrupt.h>
 
 #define CS_PIN PIN_CAN_CS
 #define CAN_BAUDRATE (1000000)
@@ -18,11 +21,55 @@
 Adafruit_MCP2515 mcp(CS_PIN);
 Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
+Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
+
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
+
+  pinMode(NEOPIXEL_POWER, OUTPUT);
+  digitalWrite(NEOPIXEL_POWER, HIGH);
+
+  statuspix.begin();
+  statuspix.clear();
+  statuspix.show();
 }
 
 void loop() {
+  if ((millis()/500)%2) {
+    statuspix.setPixelColor(0, 10,10,0);
+  } else {
+    statuspix.clear();
+  }
+  statuspix.show();
+}
+
+RPI_PICO_Timer ITimer(0);
+Stack stack(10);
+Chase red(stack.getSize(), Pixel(128));
+Chase green(stack.getSize(), PIXEL_GREEN);
+Solid blue(stack.getSize(), Pixel(0,0,128));
+
+bool TimerHandler(struct repeating_timer *t) {
+  /*
+  red.setStart((red.getStart() + 1) % red.getSize());
+  red.setEnd((red.getEnd() + 1) % red.getSize());
+  blue.setStart((blue.getStart() + 1) % blue.getSize());
+  blue.setEnd((blue.getEnd() + 1) % blue.getSize());
+  */
+  for (int i = 0; i < stack.getSize(); i++) {
+    Pixel c = stack.get(i);
+    uint8_t a = c.getAlpha();
+
+    if (a > 0) {
+      neopixel.setPixelColor(i, c.getRed(), c.getGreen(), c.getBlue(), c.getWhite());
+    } else {
+      neopixel.setPixelColor(i, 0, 0, 0);
+    }
+  }
+  stack.next();
+  neopixel.show();
+  Serial.println();
+  return true;
 }
 
 // the setup function runs once when you press reset or power the board
@@ -40,18 +87,48 @@ void setup1() {
   Serial.println("MCP2515 chip found");
 
   neopixel.begin();
+  //neopixel.setBrightness(20);
   neopixel.clear();
   neopixel.show();
-  neopixel.setBrightness(20);
+
+  red.setSpeed(5, 100);
+  green.setSpeed(10, 100);
+
+  blue.setStart(5);
+  blue.setWidth(1);
+
+  stack.Push(&red);
+  stack.Push(&green);
+  stack.Push(&blue);
+
+  if (ITimer.attachInterrupt(100, TimerHandler)) {
+    Serial.println("set up timer");
+  }
 }
 
-// the loop function runs over and over again forever
 static int hue = 0;
 
+void flash() {
+
+}
+
 void loop1() {
-  neopixel.rainbow(hue);
-  neopixel.show();
-  hue = (hue + 64) & 0xffffff;
+  uint32_t apiClass;
+  if (!rp2040.fifo.pop_nb(&apiClass)) {
+    return;
+  }
+  uint32_t index = rp2040.fifo.pop();
+  uint32_t data1 = rp2040.fifo.pop();
+  uint32_t data2 = rp2040.fifo.pop();
+
+  Serial.print(apiClass, HEX);
+  Serial.print('|');
+  Serial.print(index, HEX);
+  Serial.print('|');
+  Serial.print(data1, HEX);
+  Serial.print('|');
+  Serial.print(data2, HEX);
+  Serial.println();
 }
 
 void rx(int available) {
@@ -64,7 +141,7 @@ void rx(int available) {
   int mfg = CANID_MFG(id);
   int devType = CANID_TYPE(id);
 
-  if (false && devType == 1) {
+  if (devType != 10 || mfg != 8) {
     return;
   }
 
@@ -75,22 +152,40 @@ void rx(int available) {
     Serial.print("[R]");
   }
 
-  Serial.print(devType, DEC);
-  Serial.print(":");
-  Serial.print(mfg, DEC);
-  Serial.print("/");
-  Serial.print(apiClass, DEC);
-  Serial.print(":");
-  Serial.print(index, DEC);
-  Serial.print("@");
-  Serial.print(devNum, DEC);
+  // Serial.print(devType, DEC);
+  // Serial.print(":");
+  // Serial.print(mfg, DEC);
+  // Serial.print("/");
+  // Serial.print(apiClass, DEC);
+  // Serial.print(":");
+  // Serial.print(index, DEC);
+  // Serial.print("@");
+  // Serial.print(devNum, DEC);
 
-  Serial.print(" -> ");
+  // Serial.print(" -> ");
 
+  // uint32_t apiId = apiClass << 4 | index;
+  // rp2040.fifo.push(apiId);
+
+  rp2040.fifo.push(apiClass);
+  rp2040.fifo.push(index);
+
+  char data[8];
+  int i = 0;
   while (mcp.available()) {
-    Serial.print((char)mcp.read(), HEX);
+    int dataByte = mcp.read();
+
+    // Serial.print((char)dataByte, HEX);
+
+    data[i++] = dataByte;
   }
-  Serial.println();
+
+  uint32_t *splitData = (uint32_t *)&data;
+
+  rp2040.fifo.push(splitData[0]);
+  rp2040.fifo.push(splitData[1]);
+
+  // Serial.println();
 
   digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
 }
