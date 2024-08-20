@@ -18,10 +18,15 @@
 #define CANID_INDEX(id) ((id >> 6) & 0xf)
 #define CANID_DEVICE(id) (id & 0x3f)
 
+#define LED_COUNT 100
+
 Adafruit_MCP2515 mcp(CS_PIN);
 Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
 Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
+
+printMessages: bool = false;
+runFunctions: bool = true;
 
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
@@ -72,6 +77,30 @@ bool TimerHandler(struct repeating_timer *t) {
   return true;
 }
 
+uint32_t getColor(int colorId) {
+  switch (colorId) {
+    case 0: // Red
+      return neopixel.Color(255, 0, 0);
+    case 1: // Green
+      return neopixel.Color(0, 255, 0);
+    case 2: // Blue
+      return neopixel.Color(0, 0, 255);
+    case 3: // Yellow
+      return neopixel.Color(255, 255, 0);
+    case 4: // Cyan
+      return neopixel.Color(0, 255, 255);
+    case 5: // Magenta
+      return neopixel.Color(255, 0, 255);
+    case 6: // White
+      return neopixel.Color(255, 255, 255);
+    case 7: // Off
+      return neopixel.Color(0, 0, 0);
+    default:
+      Serial.println("Warning: Invalid colorId given. Valid colors are between 0 and 7");
+      return neopixel.Color(0, 0, 0);
+  }
+}
+
 // the setup function runs once when you press reset or power the board
 void setup1() {
   //pinMode(LED_BUILTIN, OUTPUT);
@@ -108,27 +137,83 @@ void setup1() {
 
 static int hue = 0;
 
-void flash() {
-
-}
-
 void loop1() {
-  uint32_t apiClass;
-  if (!rp2040.fifo.pop_nb(&apiClass)) {
+  uint32_t funcId;
+  if (!rp2040.fifo.pop_nb(&funcId)) {
     return;
   }
   uint32_t index = rp2040.fifo.pop();
-  uint32_t data1 = rp2040.fifo.pop();
-  uint32_t data2 = rp2040.fifo.pop();
+  uint32_t argList1 = rp2040.fifo.pop();
+  uint32_t argList2 = rp2040.fifo.pop();
 
-  Serial.print(apiClass, HEX);
-  Serial.print('|');
-  Serial.print(index, HEX);
-  Serial.print('|');
-  Serial.print(data1, HEX);
-  Serial.print('|');
-  Serial.print(data2, HEX);
-  Serial.println();
+  uint32_t colorId = argList1 & 0x7;
+  uint32_t color;
+  if (colorId == 7) {
+    uint8_t r = (argList1 >> 8) & 0xFF;
+    uint8_t g = (argList1 >> 16) & 0xFF;
+    uint8_t b = (argList1 >> 24) & 0xFF;
+    color = neopixel.Color(r, g, b);
+  } else {
+    color = getColor(colorId);
+  }
+
+  Serial.print("funcId: ");
+  Serial.println(funcId);
+
+  switch (funcId) {
+    case 0: // set color
+      neopixel.fill(color, 0, LED_COUNT);
+      break;
+    case 1: // turn off LEDs
+      neopixel.clear(); // probably eventually use case 0 and use getColor(7) for the color
+      break;
+    case 2: // rotate or bounce color
+      break;
+    case 3: // rotate a rainbow color
+      break;
+    case 4: // flash color
+      break;
+    case 5: // pulse color
+      break;
+    case 10: { // config message printing
+      int boolean = argList1 & 0x1;
+      printMessages = (boolean == 1);
+      break;
+    }
+    case 11: { // config function running
+      int boolean = argList1 & 0x1;
+      runFunctions = (boolean == 1);
+      break;
+    }
+    case 20: { // set the brightness of the neopixel
+      uint8_t brightness = argList1 & 0xFF;
+      neopixel.setBrightness(brightness);
+      break;
+    }
+    case 30: { // test communications
+      Serial.println("Testing Communications...");
+
+      int value1 = argList1 & 0x7;
+      int value2 = (argList1 >> 3) & 0x1F;
+      int value3 = (argList1 >> 8) & 0x3FFF;
+      int value4 = (argList1 >> 22) & 0x7F;
+      int value5 = ((argList1 >> 31) & 0x1) | ((argList2 & 0xFF) << 1);
+      int value6 = (argList2 >> 16) & 0x3FFF;
+
+      Serial.println("Expected Values: 5 - 12 - 12345 - 55 - 400 - 13333");
+      Serial.println("Received Values: " + String(value1) + " - " + String(value2) +
+                                   " - " + String(value3) + " - " + String(value4) +
+                                   " - " + String(value5) + " - " + String(value6));
+      Serial.println("...Communications Are Functioning Properly.\n");
+      break;
+    }
+    case 31: // test LEDs
+      break;
+    default:
+      neopixel.clear();
+      break;
+  }
+  neopixel.show();
 }
 
 void rx(int available) {
@@ -141,7 +226,7 @@ void rx(int available) {
   int mfg = CANID_MFG(id);
   int devType = CANID_TYPE(id);
 
-  if (devType != 10 || mfg != 8) {
+  if (devType != 10 || mfg != 8 || devNum != 0) {
     return;
   }
 
@@ -151,18 +236,6 @@ void rx(int available) {
     // Remote transmission request, packet contains no data
     Serial.print("[R]");
   }
-
-  // Serial.print(devType, DEC);
-  // Serial.print(":");
-  // Serial.print(mfg, DEC);
-  // Serial.print("/");
-  // Serial.print(apiClass, DEC);
-  // Serial.print(":");
-  // Serial.print(index, DEC);
-  // Serial.print("@");
-  // Serial.print(devNum, DEC);
-
-  // Serial.print(" -> ");
 
   // uint32_t apiId = apiClass << 4 | index;
   // rp2040.fifo.push(apiId);
@@ -175,17 +248,13 @@ void rx(int available) {
   while (mcp.available()) {
     int dataByte = mcp.read();
 
-    // Serial.print((char)dataByte, HEX);
-
     data[i++] = dataByte;
   }
 
-  uint32_t *splitData = (uint32_t *)&data;
+  uint32_t *splitData = (uint32_t *) & data;
 
   rp2040.fifo.push(splitData[0]);
   rp2040.fifo.push(splitData[1]);
-
-  // Serial.println();
 
   digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
 }
