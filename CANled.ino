@@ -25,8 +25,8 @@ Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
 Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
 
-printMessages: bool = false;
-runFunctions: bool = true;
+bool printMessages = false;
+bool runFunctions = true;
 
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
@@ -49,7 +49,7 @@ void loop() {
 }
 
 RPI_PICO_Timer ITimer(0);
-Stack stack(10);
+Stack stack(100);
 Chase red(stack.getSize(), Pixel(128));
 Chase green(stack.getSize(), PIXEL_GREEN);
 Solid blue(stack.getSize(), Pixel(0,0,128));

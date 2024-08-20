@@ -61,4 +61,3 @@ Pixel Chase::get(uint16_t index) {
 
   return target == index ? color : PIXEL_IGNORE;
 }
-
