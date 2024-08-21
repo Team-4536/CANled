@@ -25,8 +25,11 @@ Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
 
 Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
 
+// eventually set them to the stored default values set in config
 bool printMessages = false;
 bool runFunctions = true;
+uint8_t brightness = 20;
+uint16_t LEDCount = 100;
 
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
@@ -71,29 +74,85 @@ bool TimerHandler(struct repeating_timer *t) {
 
 void animate(uint32_t index, uint64_t data) {
   switch (index) {
-    case 0: {
+    case 0: { // set color
+      uint8_t r = data & 0xFF;
+      uint8_t g = (data >> 8) & 0xFF;
+      uint8_t b = (data >> 16) & 0xFF;
+      uint8_t w = (data >> 24) & 0xFF;
+
+      Pixel color = Pixel(r, g, b, w);
+      Solid *solid = new Solid(stack.getSize(), color);
+      stack.Push(solid);
+
       break;
     }
+    case 1: { // reset LEDs
+      Solid *solid = new Solid(stack.getSize(), Pixel(0, 0, 0, 0));
+      stack.Push(solid);
+      break;
+    }
+    case 2: { // rotate or bounce color
+      uint8_t r = data & 0xFF;
+      uint8_t g = (data >> 8) & 0xFF;
+      uint8_t b = (data >> 16) & 0xFF;
+      uint8_t w = (data >> 24) & 0xFF;
+      uint16_t speed = (data >> 32) & 0xFFFF;
+      uint8_t segmentCount = (data >> 48) & 0x3;
+      uint8_t mode = (data >> 56) & 0x3;
+
+      Pixel color = Pixel(r, g, b, w);
+      Chase *chase = new Chase(stack.getSize(), color, (mode >= 2));
+      stack.Push(chase);
+      break;
+    }
+    case 3: // rotate a rainbow color
+      break;
+    case 4: // flash color
+      break;
+    case 5: // pulse color
+      break;
+    default:
+      break;
   }
 }
 
 void config(uint32_t index, uint64_t data) {
+  return sessionConfig(index, data);
   switch (index) {
     case 0: {
       break;
     }
+    default:
+      break;
   }
 }
 
 void sessionConfig(uint32_t index, uint64_t data) {
   switch (index) {
-    case 0: {
+    case 0: { // config message printing
+      int boolean = data & 0x1;
+      printMessages = (boolean == 1);
       break;
     }
+    case 1: { // config function running
+      int boolean = data & 0x1;
+      runFunctions = (boolean == 1);
+      break;
+    }
+    case 2: { // config the brightness of the neopixel
+      brightness = data & 0xFF;
+      break;
+    }
+    case 3: { // config the LED count
+      LEDCount = data & 0xFFFF;
+      break;
+    }
+    default:
+      break;
   }
 }
 
-void test(uint8_t index, uint64_t data) {
+void test(uint32_t index, uint64_t data) {
   switch (index) {
     case 0: { // test communications
       Serial.println("Testing Communications...");
@@ -112,9 +171,11 @@ void test(uint8_t index, uint64_t data) {
       Serial.println("...Communications Are Functioning Properly.\n");
       break;
     }
-    case 31: { // test LEDs
+    case 1: { // test LEDs
       break;
     }
+    default:
+      break;
   }
 }
 
@@ -169,52 +230,6 @@ void loop1() {
       test(index, data);
       break;
     default:
-      break;
-  }
-  
-  switch (index) {
-    case 0: { // set color
-      uint8_t r = data & 0xFF;
-      uint8_t g = (data >> 8) & 0xFF;
-      uint8_t b = (data >> 16) & 0xFF;
-      uint8_t w = (data >> 24) & 0xFF;
-
-      Pixel color = Pixel(r, g, b, w);
-      Solid *fill = new Solid(stack.getSize(), color);
-      stack.Push(fill);
-
-      break;
-    }
-    case 1: { // reset LEDs
-      Solid *fill = new Solid(stack.getSize(), Pixel(0, 0, 0, 0));
-      stack.Push(fill);
-      break;
-    }
-    case 2: // rotate or bounce color
-      break;
-    case 3: // rotate a rainbow color
-      break;
-    case 4: // flash color
-      break;
-    case 5: // pulse color
-      break;
-    case 10: { // config message printing
-      int boolean = data & 0x1;
-      printMessages = (boolean == 1);
-      break;
-    }
-    case 11: { // config function running
-      int boolean = data & 0x1;
-      runFunctions = (boolean == 1);
-      break;
-    }
-    case 20: { // set the brightness of the neopixel
-      uint8_t brightness = data & 0xFF;
-      neopixel.setBrightness(brightness);
-      break;
-    }
-    default:
-      neopixel.clear();
       break;
   }
 }
