@@ -52,6 +52,10 @@ void Stack::Pop() {
   }
 }
 
+void Stack::Clear() {
+  generators.clear();
+}
+
 Chase::Chase(uint16_t size, Pixel color, bool bounce) : Generator::Generator(size), color(color), bounce(bounce) {
 }
 

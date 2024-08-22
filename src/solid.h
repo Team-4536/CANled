@@ -21,6 +21,7 @@ public:
   bool next();
   void Push(Generator*);
   void Pop();
+  void Clear();
 };
 
 

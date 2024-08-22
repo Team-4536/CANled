@@ -68,7 +68,6 @@ bool TimerHandler(struct repeating_timer *t) {
   }
   stack.next();
   neopixel.show();
-  Serial.println();
   return true;
 }
 
@@ -83,12 +82,10 @@ void animate(uint32_t index, uint64_t data) {
       Pixel color = Pixel(r, g, b, w);
       Solid *solid = new Solid(stack.getSize(), color);
       stack.Push(solid);
-
       break;
     }
     case 1: { // reset LEDs
-      Solid *solid = new Solid(stack.getSize(), Pixel(0, 0, 0, 0));
-      stack.Push(solid);
+      stack.Clear();
       break;
     }
     case 2: { // rotate or bounce color
@@ -96,9 +93,12 @@ void animate(uint32_t index, uint64_t data) {
       uint8_t g = (data >> 8) & 0xFF;
       uint8_t b = (data >> 16) & 0xFF;
       uint8_t w = (data >> 24) & 0xFF;
-      uint16_t speed = (data >> 32) & 0xFFFF;
+      uint16_t speedBinary = (data >> 32) & 0xFFFF;
       uint8_t segmentCount = (data >> 48) & 0x3;
       uint8_t mode = (data >> 56) & 0x3;
+
+      float speed = speedBinary / 6553.5;
+      segmentCount += 1;
 
       Pixel color = Pixel(r, g, b, w);
       Chase *chase = new Chase(stack.getSize(), color, (mode >= 2));
@@ -107,8 +107,20 @@ void animate(uint32_t index, uint64_t data) {
     }
     case 3: // rotate a rainbow color
       break;
-    case 4: // flash color
+    case 4: { // flash color
+      uint8_t r = data & 0xFF;
+      uint8_t g = (data >> 8) & 0xFF;
+      uint8_t b = (data >> 16) & 0xFF;
+      uint8_t w = (data >> 24) & 0xFF;
+      uint16_t speedBinary = (data >> 32) & 0xFFFF;
+      uint8_t durationBinary = (data >> 48) & 0x3;
+
+      float speed = speedBinary / 13107;
+      float duration = durationBinary / 6553.5;
+
+      Pixel color = Pixel(r, g, b, w);
       break;
+    }
     case 5: // pulse color
       break;
     default:
@@ -194,7 +206,7 @@ void setup1() {
   Serial.println("MCP2515 chip found");
 
   neopixel.begin();
-  //neopixel.setBrightness(20);
+  neopixel.setBrightness(brightness);
   neopixel.clear();
   neopixel.show();
 
