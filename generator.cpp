@@ -1,7 +1,7 @@
 #include <cstdint>
 #include "generator.h"
 
-Generator::Generator(uint16_t size) : size(size), end(size) {
+Generator::Generator(uint16_t size) : size(size), end(0) {
   speed_numerator = 1;
   speed_denominator = 1;
 };

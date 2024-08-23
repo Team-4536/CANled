@@ -24,7 +24,6 @@ public:
   void Clear();
 };
 
-
 class Chase : public Generator {
 protected:
   Pixel color;

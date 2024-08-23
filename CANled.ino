@@ -78,9 +78,13 @@ void animate(uint32_t index, uint64_t data) {
       uint8_t g = (data >> 8) & 0xFF;
       uint8_t b = (data >> 16) & 0xFF;
       uint8_t w = (data >> 24) & 0xFF;
+      uint16_t startIdx = (data >> 32) & 0xFFFF;
+      uint16_t count = (data >> 48) & 0xFFFF;
 
       Pixel color = Pixel(r, g, b, w);
       Solid *solid = new Solid(stack.getSize(), color);
+      solid->setStart(startIdx);
+      solid->setWidth(count);
       stack.Push(solid);
       break;
     }
@@ -210,6 +214,9 @@ void setup1() {
   neopixel.clear();
   neopixel.show();
 
+  Solid solid();
+  solid.setWidth();
+
   if (ITimer.attachInterrupt(100, TimerHandler)) {
     Serial.println("set up timer");
   }
@@ -267,6 +274,16 @@ void rx(int available) {
     Serial.print("[R]");
   }
 
+  if (printMessages) {
+    Serial.print(
+      String(devType) + ":" +
+      String(mfg) + "/" +
+      String(apiClass) + ":" +
+      String(index) + "@" +
+      String(devNum) + " -> "
+    );
+  }
+
   rp2040.fifo.push(apiClass);
   rp2040.fifo.push(index);
 
@@ -274,8 +291,15 @@ void rx(int available) {
   int i = 0;
   while (mcp.available()) {
     int dataByte = mcp.read();
-
     data[i++] = dataByte;
+  
+    if (printMessages) {
+      Serial.print(dataByte, BIN);
+    }
+  }
+
+  if (printMessages) {
+    Serial.println();
   }
 
   uint32_t *splitData = (uint32_t *) &data;
