@@ -6,6 +6,26 @@ Generator::Generator(uint16_t size) : size(size), end(0) {
   speed_denominator = 1;
 };
 
+uint16_t mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_t width) {
+  // if (start == end) {
+  //   return (i + start) % width;
+  // } else if (i < start || i > end - 1) {
+  //   return OUT_OF_RANGE;
+  // } else {
+  //   return i - start;
+  // }
+
+  if (
+    start == end ||
+    (start < end && start <= i && i < end) ||
+    (start > end && (i >= start || i < end))
+  ) {
+    return (i - start) % width;
+  } else {
+    return OUT_OF_RANGE;
+  }
+}
+
 void Generator::reset() {
   world_time = 0;
   local_time = 0;

@@ -190,6 +190,21 @@ void test(uint32_t index, uint64_t data) {
     case 1: { // test LEDs
       break;
     }
+    case 3: { // test the indexing
+      Solid *red = Solid(stack.getSize(), Pixel(255));
+      red->setStart(0);
+      red->setWidth(1);
+
+      Solid *blue = Solid(stack.getSize(), Pixel(0, 0, 255));
+      blue->setStart(stack.getWidth() - 1);
+      blue->setWidth(1);
+
+      Gradient *gradient = new Gradient(stack.getSize(), Pixel(), Pixel(255, 255, 255));
+      stack.push(gradient);
+      stack.push(red);
+      stack.push(blue);
+      break;
+    }
     default:
       break;
   }
@@ -214,8 +229,10 @@ void setup1() {
   neopixel.clear();
   neopixel.show();
 
-  Solid solid();
-  solid.setWidth();
+  Pixel testColor = Pixel(155, 0, 55);
+  Solid *testSolid = new Solid(LED_COUNT, testColor);
+  testSolid->setWidth(4);
+  stack.Push(testSolid);
 
   if (ITimer.attachInterrupt(100, TimerHandler)) {
     Serial.println("set up timer");

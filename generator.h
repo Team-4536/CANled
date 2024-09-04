@@ -2,6 +2,8 @@
 
 #include "pixel.h"
 
+#define OUT_OF_RANGE 0xffff
+
 class Generator {
 protected:
   uint16_t size; // size of the strip
@@ -19,6 +21,8 @@ public:
   uint16_t getStart();
   uint16_t getWidth();
   uint16_t getEnd();
+  
+  uint16_t mapToRange(uint16_t);
 
   void setStart(uint16_t);
   void setWidth(uint16_t);
