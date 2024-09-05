@@ -10,6 +10,8 @@ protected:
   uint16_t start; // start index
   uint16_t end; // end index
 
+  uint16_t mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_t width);
+
   unsigned long world_time;
   uint8_t speed_numerator;
   uint16_t speed_denominator;
@@ -21,14 +23,12 @@ public:
   uint16_t getStart();
   uint16_t getWidth();
   uint16_t getEnd();
-  
-  uint16_t mapToRange(uint16_t);
 
-  void setStart(uint16_t);
-  void setWidth(uint16_t);
-  void setEnd(uint16_t);
+  void setStart(uint16_t start);
+  void setWidth(uint16_t width);
+  void setEnd(uint16_t end);
 
-  virtual void setSpeed(uint8_t, uint16_t);
+  virtual void setSpeed(uint8_t numerator, uint16_t denominator);
 
   virtual bool next();
   virtual void reset();

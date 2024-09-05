@@ -11,12 +11,12 @@ protected:
   uint8_t alpha;
 
 public:
-  Pixel(uint8_t red = 0, uint8_t green = 0, uint8_t blue = 0, uint8_t white = 0, uint8_t alpha = 255) {
-    this->red = red;
-    this->green = green;
-    this->blue = blue;
-    this->white = white;
-    this->alpha = alpha;
+  Pixel(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0, uint8_t w = 0, uint8_t a = 255) {
+    this->red = r;
+    this->green = g;
+    this->blue = b;
+    this->white = w;
+    this->alpha = a;
   }
   uint8_t getRed() {
     return red;

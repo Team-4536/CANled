@@ -199,7 +199,7 @@ void test(uint32_t index, uint64_t data) {
       blue->setStart(stack.getWidth() - 1);
       blue->setWidth(1);
 
-      Gradient *gradient = new Gradient(stack.getSize(), Pixel(), Pixel(255, 255, 255));
+      Gradient *gradient = new Gradient(stack.getSize(), Pixel(), Pixel(255, 255, 255, 255));
       stack.push(gradient);
       stack.push(red);
       stack.push(blue);

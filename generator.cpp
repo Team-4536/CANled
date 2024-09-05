@@ -1,13 +1,15 @@
 #include <cstdint>
 #include "generator.h"
 
-Generator::Generator(uint16_t size) : size(size), end(0) {
+Generator::Generator(uint16_t size) : size(size), start(0), end(0) {
   speed_numerator = 1;
   speed_denominator = 1;
 };
 
-uint16_t mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_t width) {
-  if (
+uint16_t Generator::mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_t width) {
+  if (i == OUT_OF_RANGE) {
+    return OUT_OF_RANGE;
+  } else if (
     start == end ||
     (start < end && start <= i && i < end) ||
     (start > end && (start <= i || i < end))
@@ -34,7 +36,7 @@ bool Generator::next() {
   return (bool)diff;
 }
 
-Pixel Generator::get(uint16_t) {
+Pixel Generator::get(uint16_t) { // I have no clue what this is for tbh
   return Pixel(0, 0, 0);
 }
 
@@ -60,22 +62,22 @@ uint16_t Generator::getEnd() {
   return end;
 }
 
-void Generator::setStart(uint16_t start) {
-  this->start = start;
+void Generator::setStart(uint16_t s) {
+  this->start = s;
 }
 
-void Generator::setWidth(uint16_t width) {
-  if (width > size) {
-    width = size;
+void Generator::setWidth(uint16_t w) {
+  if (w > size) {
+    w = size;
   }
-  end = (start + width) % size;
+  end = (start + w) % size;
 }
 
-void Generator::setEnd(uint16_t end) {
-  this->end = end > size ? size : end;
+void Generator::setEnd(uint16_t e) {
+  this->end = e > size ? size : e;
 }
 
-void Generator::setSpeed(uint8_t numerator, uint16_t denominator = 100) {
+void Generator::setSpeed(uint8_t numerator, uint16_t denominator = 255) {
   if (numerator > denominator) {
     numerator = denominator;
   }
