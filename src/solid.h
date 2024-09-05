@@ -28,8 +28,9 @@ class Chase : public Generator {
 protected:
   Pixel color;
   bool bounce;
+  bool fade;
 public:
-  Chase(uint16_t, Pixel, bool = false);
+  Chase(uint16_t, Pixel, bool = false, bool = false);
   Pixel get(uint16_t);
 };
 

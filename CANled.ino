@@ -44,7 +44,7 @@ void setup() {
 
 void loop() {
   if ((millis()/500)%2) {
-    statuspix.setPixelColor(0, 10,10,0);
+    statuspix.setPixelColor(0, 10, 10, 0);
   } else {
     statuspix.clear();
   }

@@ -35,7 +35,7 @@ bool Generator::next() {
 }
 
 Pixel Generator::get(uint16_t) {
-  return Pixel(0,0,0);
+  return Pixel(0, 0, 0);
 }
 
 uint16_t Generator::getSize() {
@@ -47,10 +47,12 @@ uint16_t Generator::getStart() {
 }
 
 uint16_t Generator::getWidth() {
-  if (start > end) {
-    return end + size - start;
-  } else {
+  if (start == end) {
+    return size;
+  } else if (start < end) {
     return end - start;
+  } else {
+    return size + end - start;
   }
 }
 

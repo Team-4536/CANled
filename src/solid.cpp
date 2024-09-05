@@ -54,24 +54,40 @@ Pixel Solid::get(uint16_t index = 0) {
   return PIXEL_IGNORE;
 }
 
-Chase::Chase(uint16_t size, Pixel color, bool bounce) : Generator::Generator(size), color(color), bounce(bounce) {}
+Chase::Chase(uint16_t size, Pixel color, bool bounce, bool fade) : Generator::Generator(size), color(color), bounce(bounce), fade(fade) {}
 
-Pixel Chase::get(uint16_t index) { // with the soon-to-be implemented mapToRange helper function, this will likely break
+Pixel Chase::get(uint16_t index) { // maybe use mapToRange to improve this code (would need to give offset to start and end)
   uint16_t width = getWidth();
-  uint16_t sel = local_time % width;
+  uint16_t s = bounce ? size : 0;
+  uint16_t sel = local_time % width - s;
   uint16_t target;
 
-  if (bounce && ((local_time / width) % 2 == 1)) {
-    target = (start + width - sel) % size;
-  } else {
-    target = (start + sel) % size;
+  if (!bounce) {
+    if (sel <= index && index < sel + size) {
+      return color;
+    } else if (index < sel + size - width) {
+      return color;
+    }
+  } else  {
+    uint16_t i = ((local_time / (width - size)) % 2 >= 1) ? index : width - index - 1;
+    if (sel <= i && i < sel + size) {
+      return color;
+    }
   }
-  return target == index ? color : PIXEL_IGNORE;
+  return PIXEL_IGNORE;
 }
 
 Gradient::Gradient(uint16_t size, Pixel color1, Pixel color2) : Generator::Generator(size), color1(color1), color2(color2) {}
 
 Pixel Gradient::get(uint16_t index) {
-  start = mapToRange(start);
-  end = mapToRange(end);
+  uint16_t width = getWidth();
+  uint16_t val = index / (width - 1);
+  
+  uint8_t r = val * color1.getRed() + (1 - val) * color2.getRed();
+  uint8_t g = val * color1.getGreen() + (1 - val) * color2.getGreen();
+  uint8_t b = val * color1.getBlue() + (1 - val) * color2.getBlue();
+  uint8_t w = val * color1.getWhite() + (1 - val) * color2.getWhite();
+  Pixel color = Pixel(r, g, b, w);
+
+  return color;
 }
