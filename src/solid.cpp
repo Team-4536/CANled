@@ -56,21 +56,19 @@ Pixel Solid::get(uint16_t i = 0) {
 
 Chase::Chase(uint16_t size, Pixel color, bool bounce, bool fade) : Generator::Generator(size), color(color), bounce(bounce), fade(fade) {}
 
-Pixel Chase::get(uint16_t index) { // implement fade
+Pixel Chase::get(uint16_t index) {
   uint16_t w = getWidth();
   uint16_t s = bounce ? size : 0;
-  uint16_t sel = local_time % w - s;
-  uint16_t i = mapToRange(index, sel + size, sel + size, w); // redo using i rather than index
+  uint16_t sel = local_time % (w - s);
+  uint16_t i = mapToRange(index, sel + size, sel + size, w);
+  uint16_t bi = w - i - 1;
 
-  if (!bounce) {
-    if (sel <= index && index < sel + size) {
-      return color;
-    } else if (index < sel + size - w) {
-      return color;
-    }
-  } else  {
-    uint16_t i = ((local_time / (w - size)) % 2 >= 1) ? index : w - index - 1;
-    if (sel <= i && i < sel + size) {
+  if (index < OUT_OF_RANGE) {
+    if (!bounce || (local_time / (w - size)) % 2 >= 1) {
+      if (0 <= i && i < size) {
+        return color;
+      }
+    } else if (0 <= bi && bi < size) {
       return color;
     }
   }
