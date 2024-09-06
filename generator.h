@@ -6,11 +6,12 @@
 
 class Generator {
 protected:
-  uint16_t size; // size of the strip
-  uint16_t start; // start index
-  uint16_t end; // end index
+  uint16_t size;
+  uint16_t start;
+  uint16_t end;
 
   uint16_t mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_t width);
+  Pixel HSVtoRGB(uint8_t H, uint8_t S, uint8_t V, uint8_t W, uint8_t A);
 
   unsigned long world_time;
   uint8_t speed_numerator;

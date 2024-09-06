@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cmath>
 #include "generator.h"
 
 Generator::Generator(uint16_t size) : size(size), start(0), end(0) {
@@ -20,6 +21,50 @@ uint16_t Generator::mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_
   }
 }
 
+Pixel Generator::HSVtoRGB(uint8_t H, uint8_t S, uint8_t V, uint8_t W = 0, uint8_t A = 0) {
+  float S_norm = S / 255.0f;
+  float V_norm = V / 255.0f;
+  
+  float C = V_norm * S_norm;
+  float H_prime = fmod(H / 60.0f, 6.0f);
+  float X = C * (1 - fabs(fmod(H_prime, 2.0f) - 1));
+  float M = V_norm - C;
+
+  float R, G, B;
+
+  if (H_prime < 1) {
+    R = C;
+    G = X;
+    B = 0;
+  } else if (H_prime < 2) {
+    R = X;
+    G = C;
+    B = 0;
+  } else if (H_prime < 3) {
+    R = 0;
+    G = C;
+    B = X;
+  } else if (H_prime < 4) {
+    R = 0;
+    G = X;
+    B = C;
+  } else if (H_prime < 5) {
+    R = X;
+    G = 0;
+    B = C;
+  } else {
+    R = C;
+    G = 0;
+    B = X;
+  }
+
+  R = (R + M) * 255;
+  G = (G + M) * 255;
+  B = (B + M) * 255;
+
+  return Pixel(R, G, B, W, A);
+}
+
 void Generator::reset() {
   world_time = 0;
   local_time = 0;
@@ -36,7 +81,7 @@ bool Generator::next() {
   return (bool)diff;
 }
 
-Pixel Generator::get(uint16_t) { // I have no clue what this is for tbh
+Pixel Generator::get(uint16_t) { 
   return Pixel(0, 0, 0);
 }
 

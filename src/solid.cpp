@@ -3,20 +3,20 @@
 Stack::Stack(uint16_t size, Pixel color) : Solid::Solid(size, color) {
 }
 
-Pixel Stack::get(uint16_t index) {
-  for (int i = generators.size()-1; i >= 0; i--) {
-    Generator *g = generators.at(i);
-    Pixel c = g->get(index);
+Pixel Stack::get(uint16_t i) {
+  for (int j = generators.size() - 1; j >= 0; j--) {
+    Generator *g = generators.at(j);
+    Pixel c = g->get(j);
     if (c.getAlpha() > 0) {
       return c;
     }
   } 
-  return Solid::get(index);
+  return Solid::get(i);
 }
 
 bool Stack::next() {
   if (Solid::next()) {
-    for (int i = generators.size()-1; i >= 0; i--) {
+    for (int i = generators.size() - 1; i >= 0; i--) {
       Generator *g = generators.at(i);
       g->next();
     }
@@ -54,18 +54,18 @@ Pixel Solid::get(uint16_t i = 0) {
   return PIXEL_IGNORE;
 }
 
-Chase::Chase(uint16_t size, Pixel color, bool bounce, bool fade) : Generator::Generator(size), color(color), bounce(bounce), fade(fade) {}
+Chase::Chase(uint16_t size, Pixel color, uint16_t segment_size, uint16_t segment_count, bool bounce, bool fade) : Generator::Generator(size), color(color), segment_size(segment_size), segment_count(segment_count), bounce(bounce), fade(fade) {}
 
-Pixel Chase::get(uint16_t index) {
+Pixel Chase::get(uint16_t i) {
   uint16_t w = getWidth();
   uint16_t s = bounce ? size : 0;
   uint16_t sel = local_time % (w - s);
-  uint16_t i = mapToRange(index, sel + size, sel + size, w);
-  uint16_t bi = w - i - 1;
+  uint16_t j = mapToRange(i, sel + size, sel + size, w);
+  uint16_t bi = w - j - 1;
 
-  if (index < OUT_OF_RANGE) {
+  if (i < OUT_OF_RANGE) {
     if (!bounce || (local_time / (w - size)) % 2 >= 1) {
-      if (0 <= i && i < size) {
+      if (0 <= j && j < size) {
         return color;
       }
     } else if (0 <= bi && bi < size) {
@@ -75,11 +75,15 @@ Pixel Chase::get(uint16_t index) {
   return PIXEL_IGNORE;
 }
 
+Rainbow::Rainbow(uint16_t size) : Generator::Generator(size) {}
+
+Pixel Rainbow::get(uint16_t i) {}
+
 Gradient::Gradient(uint16_t size, Pixel color1, Pixel color2) : Generator::Generator(size), color1(color1), color2(color2) {}
 
-Pixel Gradient::get(uint16_t index) {
+Pixel Gradient::get(uint16_t i) {
   uint16_t w = getWidth();
-  uint16_t v = index / (w - 1);
+  uint16_t v = i / (w - 1);
   
   uint8_t r = v * color1.getRed() + (1 - v) * color2.getRed();
   uint8_t g = v * color1.getGreen() + (1 - v) * color2.getGreen();
