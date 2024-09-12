@@ -4,6 +4,14 @@
 
 #include "../generator.h"
 
+class Solid : public Generator {
+protected:
+  Pixel color;
+public:
+  Solid(uint16_t size, Pixel color);
+  Pixel get(uint16_t i);
+};
+
 class Stack : public Solid {
 private:
   std::vector<Generator*> generators;
@@ -14,14 +22,6 @@ public:
   void push(Generator *g);
   void pop();
   void clear();
-};
-
-class Solid : public Generator {
-protected:
-  Pixel color;
-public:
-  Solid(uint16_t size, Pixel color);
-  Pixel get(uint16_t i);
 };
 
 class Chase : public Generator {

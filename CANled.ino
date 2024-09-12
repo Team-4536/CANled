@@ -1,6 +1,5 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
-#include <math.h>
 
 #include "src/solid.h"
 
@@ -105,7 +104,7 @@ void animate(uint32_t index, uint64_t data) {
       segmentCount += 1;
 
       Pixel color = Pixel(r, g, b, w);
-      Chase *chase = new Chase(stack.getSize(), color);
+      Chase *chase = new Chase(stack.getSize(), color, 5);
       chase->setSegmentCount(segmentCount);
       chase->setBounce(mode >= 2);
       chase->setDirection(mode % 2 == 0);
@@ -125,7 +124,7 @@ void animate(uint32_t index, uint64_t data) {
       float duration = durationBinary / 6553.5;
 
       Pixel color = Pixel(r, g, b, w);
-      Rainbow *rainbow = new Rainbow(stack.getSize(), color);
+      Rainbow *rainbow = new Rainbow(stack.getSize());
       rainbow->setSpeed(speedBinary, 65535);
       stack.push(rainbow);
       break;
@@ -223,11 +222,11 @@ void test(uint32_t index, uint64_t data) {
       break;
     }
     case 3: { // test the indexing
-      Solid *red = Solid(stack.getSize(), Pixel(255));
+      Solid *red = new Solid(stack.getSize(), Pixel(255));
       red->setStart(0);
       red->setWidth(1);
 
-      Solid *blue = Solid(stack.getSize(), Pixel(0, 0, 255));
+      Solid *blue = new Solid(stack.getSize(), Pixel(0, 0, 255));
       blue->setStart(stack.getWidth() - 1);
       blue->setWidth(1);
 

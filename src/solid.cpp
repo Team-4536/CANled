@@ -1,4 +1,20 @@
 #include "solid.h"
+#include <math.h>
+
+
+Solid::Solid(uint16_t size, Pixel color) : Generator::Generator(size), color(color) {
+}
+
+Pixel Solid::get(uint16_t i = 0) {
+  if (end <= start) {
+    if (i < end || i >= start) {
+      return color;
+    }
+  } else if (i >= start && i < end) {
+    return color;
+  }
+  return PIXEL_IGNORE;
+}
 
 Stack::Stack(uint16_t size, Pixel color) : Solid::Solid(size, color) {
 }
@@ -38,20 +54,6 @@ void Stack::pop() {
 
 void Stack::clear() {
   generators.clear();
-}
-
-Solid::Solid(uint16_t size, Pixel color) : Generator::Generator(size), color(color) {
-}
-
-Pixel Solid::get(uint16_t i = 0) {
-  if (end <= start) {
-    if (i < end || i >= start) {
-      return color;
-    }
-  } else if (i >= start && i < end) {
-    return color;
-  }
-  return PIXEL_IGNORE;
 }
 
 Chase::Chase(uint16_t size, Pixel color, uint16_t segment_size) : Generator::Generator(size), color(color), segment_size(segment_size) {}
@@ -94,14 +96,14 @@ void Chase::setFade(bool fade) {
 Rainbow::Rainbow(uint16_t size) : Generator::Generator(size) {}
 
 Pixel Rainbow::get(uint16_t i) {
-  // stuff code
+  return Pixel(255, 55, 0, 55);
 }
 
 Gradient::Gradient(uint16_t size, Pixel color1, Pixel color2) : Generator::Generator(size), color1(color1), color2(color2) {}
 
 Pixel Gradient::get(uint16_t i) {
-  uint16_t w = getWidth();
-  uint16_t v = i / (w - 1);
+  uint16_t wi = getWidth();
+  uint16_t v = i / (wi - 1);
   
   uint8_t r = v * color1.getRed() + (1 - v) * color2.getRed();
   uint8_t g = v * color1.getGreen() + (1 - v) * color2.getGreen();
@@ -115,7 +117,7 @@ Pixel Gradient::get(uint16_t i) {
 Pulse::Pulse(uint16_t size, Pixel color) : Generator::Generator(size), color(color) {}
 
 Pixel Pulse::get(uint16_t i) {
-  float sine = sin(i / 100) / 5;
+  float sine = std::sin(i / 100) / 5;
   uint8_t r = sine * color.getRed(), g = sine * color.getGreen(), b = sine * color.getBlue(), w = sine * color.getWhite();
   Pixel color = Pixel(r, g, b, w);
 
