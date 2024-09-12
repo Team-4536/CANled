@@ -1,5 +1,6 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
+#include <math.h>
 
 #include "src/solid.h"
 
@@ -53,7 +54,7 @@ void loop() {
 
 RPI_PICO_Timer ITimer(0);
 
-Stack stack(100);
+Stack stack(LED_COUNT);
 
 bool TimerHandler(struct repeating_timer *t) {
   for (int i = 0; i < stack.getSize(); i++) {
@@ -85,14 +86,14 @@ void animate(uint32_t index, uint64_t data) {
       Solid *solid = new Solid(stack.getSize(), color);
       solid->setStart(startIdx);
       solid->setWidth(count);
-      stack.Push(solid);
+      stack.push(solid);
       break;
     }
     case 1: { // reset LEDs
-      stack.Clear();
+      stack.clear();
       break;
     }
-    case 2: { // rotate or bounce color
+    case 2: { // bounce color
       uint8_t r = data & 0xFF;
       uint8_t g = (data >> 8) & 0xFF;
       uint8_t b = (data >> 16) & 0xFF;
@@ -101,16 +102,34 @@ void animate(uint32_t index, uint64_t data) {
       uint8_t segmentCount = (data >> 48) & 0x3;
       uint8_t mode = (data >> 56) & 0x3;
 
-      float speed = speedBinary / 6553.5;
       segmentCount += 1;
 
       Pixel color = Pixel(r, g, b, w);
-      Chase *chase = new Chase(stack.getSize(), color, (mode >= 2));
-      stack.Push(chase);
+      Chase *chase = new Chase(stack.getSize(), color);
+      chase->setSegmentCount(segmentCount);
+      chase->setBounce(mode >= 2);
+      chase->setDirection(mode % 2 == 0);
+      chase->setFade(false); // needs to take arg
+      chase->setSpeed(speedBinary, 65535);
+      stack.push(chase);
       break;
     }
-    case 3: // rotate a rainbow color
+    case 3: { // rotate a rainbow color
+      uint8_t r = data & 0xFF;
+      uint8_t g = (data >> 8) & 0xFF;
+      uint8_t b = (data >> 16) & 0xFF;
+      uint8_t w = (data >> 24) & 0xFF;
+      uint16_t speedBinary = (data >> 32) & 0xFFFF;
+      uint8_t durationBinary = (data >> 48) & 0x3;
+
+      float duration = durationBinary / 6553.5;
+
+      Pixel color = Pixel(r, g, b, w);
+      Rainbow *rainbow = new Rainbow(stack.getSize(), color);
+      rainbow->setSpeed(speedBinary, 65535);
+      stack.push(rainbow);
       break;
+    } 
     case 4: { // flash color
       uint8_t r = data & 0xFF;
       uint8_t g = (data >> 8) & 0xFF;
@@ -119,14 +138,27 @@ void animate(uint32_t index, uint64_t data) {
       uint16_t speedBinary = (data >> 32) & 0xFFFF;
       uint8_t durationBinary = (data >> 48) & 0x3;
 
-      float speed = speedBinary / 13107;
       float duration = durationBinary / 6553.5;
 
       Pixel color = Pixel(r, g, b, w);
       break;
     }
-    case 5: // pulse color
+    case 5: { // pulse color
+      uint8_t r = data & 0xFF;
+      uint8_t g = (data >> 8) & 0xFF;
+      uint8_t b = (data >> 16) & 0xFF;
+      uint8_t w = (data >> 24) & 0xFF;
+      uint16_t speedBinary = (data >> 32) & 0xFFFF;
+      uint8_t durationBinary = (data >> 48) & 0x3;
+
+      float duration = durationBinary / 6553.5;
+
+      Pixel color(r, g, b, w);
+      Pulse *pulse = new Pulse(stack.getSize(), color);
+      pulse->setSpeed(speedBinary, 65535);
+      stack.push(pulse);
       break;
+    }
     default:
       break;
   }
@@ -232,7 +264,7 @@ void setup1() {
   Pixel testColor = Pixel(155, 0, 55);
   Solid *testSolid = new Solid(LED_COUNT, testColor);
   testSolid->setWidth(4);
-  stack.Push(testSolid);
+  stack.push(testSolid);
 
   if (ITimer.attachInterrupt(100, TimerHandler)) {
     Serial.println("set up timer");

@@ -9,6 +9,7 @@ protected:
   uint16_t size;
   uint16_t start;
   uint16_t end;
+  uint16_t duration;
 
   uint16_t mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_t width);
   Pixel HSVtoRGB(uint8_t H, uint8_t S, uint8_t V, uint8_t W, uint8_t A);
@@ -28,6 +29,7 @@ public:
   void setStart(uint16_t start);
   void setWidth(uint16_t width);
   void setEnd(uint16_t end);
+  void setDuration(uint16_t duration);
 
   virtual void setSpeed(uint8_t numerator, uint16_t denominator);
 

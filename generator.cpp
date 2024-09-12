@@ -122,6 +122,10 @@ void Generator::setEnd(uint16_t e) {
   this->end = e > size ? size : e;
 }
 
+void Generator::setDuration(uint16_t duration = OUT_OF_RANGE) {
+  this->duration = duration;
+}
+
 void Generator::setSpeed(uint8_t numerator, uint16_t denominator = 255) {
   if (numerator > denominator) {
     numerator = denominator;

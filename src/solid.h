@@ -28,12 +28,19 @@ class Chase : public Generator {
 protected:
   Pixel color;
   uint16_t segment_size;
-  uint16_t segment_count;
-  bool bounce;
-  bool fade;
+  uint16_t segment_count = 1;
+  bool forward_direction = true;
+  bool bounce = false;
+  bool fade = false;
 public:
-  Chase(uint16_t size, Pixel color, uint16_t segment_size, uint16_t segment_count, bool bounce = false, bool fade = false);
+  Chase(uint16_t size, Pixel color, uint16_t segment_size);
+
   Pixel get(uint16_t i);
+
+  void setSegmentCount(uint16_t segment_count);
+  void setDirection(bool forward);
+  void setBounce(bool bounce);
+  void setFade(bool fade);
 };
 
 class Rainbow : public Generator {
@@ -48,5 +55,13 @@ protected:
   Pixel color2;
 public:
   Gradient(uint16_t size, Pixel color1, Pixel color2);
+  Pixel get(uint16_t i);
+};
+
+class Pulse : public Generator {
+protected:
+  Pixel color;
+public:
+  Pulse(uint16_t size, Pixel color);
   Pixel get(uint16_t i);
 };

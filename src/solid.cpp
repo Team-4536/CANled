@@ -54,7 +54,7 @@ Pixel Solid::get(uint16_t i = 0) {
   return PIXEL_IGNORE;
 }
 
-Chase::Chase(uint16_t size, Pixel color, uint16_t segment_size, uint16_t segment_count, bool bounce, bool fade) : Generator::Generator(size), color(color), segment_size(segment_size), segment_count(segment_count), bounce(bounce), fade(fade) {}
+Chase::Chase(uint16_t size, Pixel color, uint16_t segment_size) : Generator::Generator(size), color(color), segment_size(segment_size) {}
 
 Pixel Chase::get(uint16_t i) {
   uint16_t w = getWidth();
@@ -75,9 +75,27 @@ Pixel Chase::get(uint16_t i) {
   return PIXEL_IGNORE;
 }
 
+void Chase::setSegmentCount(uint16_t count) {
+  this->segment_count = count;
+}
+
+void Chase::setDirection(bool direction) {
+  this->forward_direction = direction;
+}
+
+void Chase::setBounce(bool bounce) {
+  this->bounce = bounce;
+}
+
+void Chase::setFade(bool fade) {
+  this->fade = fade;
+}
+
 Rainbow::Rainbow(uint16_t size) : Generator::Generator(size) {}
 
-Pixel Rainbow::get(uint16_t i) {}
+Pixel Rainbow::get(uint16_t i) {
+  // stuff code
+}
 
 Gradient::Gradient(uint16_t size, Pixel color1, Pixel color2) : Generator::Generator(size), color1(color1), color2(color2) {}
 
@@ -89,6 +107,16 @@ Pixel Gradient::get(uint16_t i) {
   uint8_t g = v * color1.getGreen() + (1 - v) * color2.getGreen();
   uint8_t b = v * color1.getBlue() + (1 - v) * color2.getBlue();
   uint8_t w = v * color1.getWhite() + (1 - v) * color2.getWhite();
+  Pixel color = Pixel(r, g, b, w);
+
+  return color;
+}
+
+Pulse::Pulse(uint16_t size, Pixel color) : Generator::Generator(size), color(color) {}
+
+Pixel Pulse::get(uint16_t i) {
+  float sine = sin(i / 100) / 5;
+  uint8_t r = sine * color.getRed(), g = sine * color.getGreen(), b = sine * color.getBlue(), w = sine * color.getWhite();
   Pixel color = Pixel(r, g, b, w);
 
   return color;
