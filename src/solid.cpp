@@ -22,7 +22,7 @@ Stack::Stack(uint16_t size, Pixel color) : Solid::Solid(size, color) {
 Pixel Stack::get(uint16_t i) {
   for (int j = generators.size() - 1; j >= 0; j--) {
     Generator *g = generators.at(j);
-    Pixel c = g->get(j);
+    Pixel c = g->get(mapToRange(j, g->getStart(), g->getEnd(), g->getWidth()));
     if (c.getAlpha() > 0) {
       return c;
     }

@@ -219,7 +219,7 @@ void test(uint32_t index, uint64_t data) {
       break;
     }
     case 1: { // test LEDs
-      break;
+      
     }
     case 3: { // test the indexing
       Solid *red = new Solid(stack.getSize(), Pixel(255));
