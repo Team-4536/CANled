@@ -1,8 +1,9 @@
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
+
 #include "generator.h"
 
-Generator::Generator(uint16_t size) : size(size), start(0), end(0) {
+Generator::Generator(uint16_t size) : size(size), start(0), end(0), duration(-1) {
   speed_numerator = 1;
   speed_denominator = 1;
 };
@@ -15,7 +16,7 @@ uint16_t Generator::mapToRange(uint16_t i, uint16_t start, uint16_t end, uint16_
     (start < end && start <= i && i < end) ||
     (start > end && (start <= i || i < end))
   ) {
-    return (i - start) % width;
+    return (size + i - start) % width;
   } else {
     return OUT_OF_RANGE;
   }
@@ -122,7 +123,7 @@ void Generator::setEnd(uint16_t e) {
   this->end = e > size ? size : e;
 }
 
-void Generator::setDuration(uint16_t duration = OUT_OF_RANGE) {
+void Generator::setDuration(float duration) {
   this->duration = duration;
 }
 

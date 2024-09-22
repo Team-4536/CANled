@@ -1,19 +1,15 @@
-#include "solid.h"
 #include <math.h>
 
+#include "solid.h"
 
 Solid::Solid(uint16_t size, Pixel color) : Generator::Generator(size), color(color) {
 }
 
 Pixel Solid::get(uint16_t i = 0) {
-  if (end <= start) {
-    if (i < end || i >= start) {
-      return color;
-    }
-  } else if (i >= start && i < end) {
-    return color;
+  if (i == OUT_OF_RANGE) {
+    return PIXEL_IGNORE;
   }
-  return PIXEL_IGNORE;
+  return color;
 }
 
 Stack::Stack(uint16_t size, Pixel color) : Solid::Solid(size, color) {
@@ -22,7 +18,7 @@ Stack::Stack(uint16_t size, Pixel color) : Solid::Solid(size, color) {
 Pixel Stack::get(uint16_t i) {
   for (int j = generators.size() - 1; j >= 0; j--) {
     Generator *g = generators.at(j);
-    Pixel c = g->get(mapToRange(j, g->getStart(), g->getEnd(), g->getWidth()));
+    Pixel c = g->get(mapToRange(i, g->getStart(), g->getEnd(), g->getWidth()));
     if (c.getAlpha() > 0) {
       return c;
     }
@@ -60,20 +56,22 @@ Chase::Chase(uint16_t size, Pixel color, uint16_t segment_size) : Generator::Gen
 
 Pixel Chase::get(uint16_t i) {
   uint16_t w = getWidth();
-  uint16_t s = bounce ? size : 0;
-  uint16_t sel = local_time % (w - s);
-  uint16_t j = mapToRange(i, sel + size, sel + size, w);
-  uint16_t bi = w - j - 1;
+  uint16_t s = bounce ? w - segment_size : w;
+  uint16_t sel = local_time % s;
+  uint16_t nb_j = mapToRange(i, sel, sel, w);
+  uint16_t j = mapToRange(w - i - 1, sel, sel, w);
+  bool b = bounce && (local_time / (w - segment_size)) % 2 >= 1;
 
   if (i < OUT_OF_RANGE) {
-    if (!bounce || (local_time / (w - size)) % 2 >= 1) {
-      if (0 <= j && j < size) {
+    if (b) {
+      if (j < segment_size) {
         return color;
       }
-    } else if (0 <= bi && bi < size) {
+    } else if (nb_j < segment_size) {
       return color;
     }
   }
+
   return PIXEL_IGNORE;
 }
 

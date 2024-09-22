@@ -1,9 +1,8 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
+#include <RPi_Pico_TimerInterrupt.h>
 
 #include "src/solid.h"
-
-#include <RPi_Pico_TimerInterrupt.h>
 
 #define CS_PIN PIN_CAN_CS
 #define CAN_BAUDRATE (1000000)
@@ -18,10 +17,8 @@
 #define CANID_INDEX(id) ((id >> 6) & 0xf)
 #define CANID_DEVICE(id) (id & 0x3f)
 
-#define LED_COUNT 100
-
 Adafruit_MCP2515 mcp(CS_PIN);
-Adafruit_NeoPixel neopixel(100, 5, NEO_RGBW + NEO_KHZ800);
+Adafruit_NeoPixel neopixel(100, 5, NEO_GRB + NEO_KHZ800);
 
 Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
 
@@ -29,7 +26,7 @@ Adafruit_NeoPixel statuspix(1, PIN_NEOPIXEL, NEO_RGB);
 bool printMessages = false;
 bool runFunctions = true;
 uint8_t brightness = 20;
-uint16_t LEDCount = 100;
+uint16_t LEDCount = 20;
 
 void setup() {
   mcp.onReceive(PIN_CAN_INTERRUPT, rx);
@@ -53,7 +50,7 @@ void loop() {
 
 RPI_PICO_Timer ITimer(0);
 
-Stack stack(LED_COUNT);
+Stack stack(LEDCount);
 
 bool TimerHandler(struct repeating_timer *t) {
   for (int i = 0; i < stack.getSize(); i++) {
@@ -78,11 +75,15 @@ void animate(uint32_t index, uint64_t data) {
       uint8_t g = (data >> 8) & 0xFF;
       uint8_t b = (data >> 16) & 0xFF;
       uint8_t w = (data >> 24) & 0xFF;
-      uint16_t startIdx = (data >> 32) & 0xFFFF;
-      uint16_t count = (data >> 48) & 0xFFFF;
+      uint8_t durationBinary = (data >> 32) & 0xFF;
+      uint16_t startIdx = (data >> 40) & 0xFFF;
+      uint16_t count = (data >> 52) & 0xFFF;
+
+      float duration = durationBinary / 25.5;
 
       Pixel color = Pixel(r, g, b, w);
       Solid *solid = new Solid(stack.getSize(), color);
+      solid->setDuration(duration);
       solid->setStart(startIdx);
       solid->setWidth(count);
       stack.push(solid);
@@ -219,7 +220,7 @@ void test(uint32_t index, uint64_t data) {
       break;
     }
     case 1: { // test LEDs
-      
+      break;
     }
     case 3: { // test the indexing
       Solid *red = new Solid(stack.getSize(), Pixel(255));
@@ -241,9 +242,8 @@ void test(uint32_t index, uint64_t data) {
   }
 }
 
-// the setup function runs once when you press reset or power the board
 void setup1() {
-  //pinMode(LED_BUILTIN, OUTPUT);
+  // pinMode(LED_BUILTIN, OUTPUT);
 
   Serial.begin(115200);
 
@@ -260,13 +260,39 @@ void setup1() {
   neopixel.clear();
   neopixel.show();
 
-  Pixel testColor = Pixel(155, 0, 55);
-  Solid *testSolid = new Solid(LED_COUNT, testColor);
-  testSolid->setWidth(4);
-  stack.push(testSolid);
+  Pixel testColor = Pixel(0, 255);
+  Chase *testAnim = new Chase(LEDCount, testColor, 5);
+  testAnim->setStart(9);
+  testAnim->setEnd(6);
+  testAnim->setBounce(false);
+  testAnim->setSpeed(1, 10);
+  stack.push(testAnim);
 
   if (ITimer.attachInterrupt(100, TimerHandler)) {
     Serial.println("set up timer");
+  }
+
+  while (!Serial) delay(50); Serial.println("---------------------"); // Waits for the Serial to begin
+
+  uint16_t s = testAnim->getStart();
+  uint16_t e = testAnim->getEnd();
+  uint16_t w = testAnim->getWidth();
+
+  for (int i = 0; i < LEDCount; i++) {
+    Serial.print(i);
+    Serial.print(" - ");
+
+    if (i == OUT_OF_RANGE) {
+      Serial.println(OUT_OF_RANGE);
+    } else if (
+      s == e ||
+      (s < e && s <= i && i < e) ||
+      (s > e && (s <= i || i < e))
+    ) {
+      Serial.println((LEDCount + i + e - s) % w);
+    } else {
+      Serial.println(OUT_OF_RANGE);
+    }
   }
 }
 
@@ -285,7 +311,9 @@ void loop1() {
 
   switch (apiClass) {
     case 0:
-      animate(index, data);
+      if (runFunctions) {
+        animate(index, data);
+      }
       break;
     case 1:
       config(index, data);
@@ -294,7 +322,9 @@ void loop1() {
       sessionConfig(index, data);
       break;
     case 3:
-      test(index, data);
+      if (runFunctions) {
+        test(index, data);
+      }
       break;
     default:
       break;
@@ -315,7 +345,7 @@ void rx(int available) {
     return;
   }
 
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on by making the voltage HIGH
 
   if (mcp.packetRtr()) {
     // Remote transmission request, packet contains no data
