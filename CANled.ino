@@ -1,7 +1,7 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
 
-#include "src/solid.h"
+#include "../pixlib/src/include"
 
 #include <RPi_Pico_TimerInterrupt.h>
 
@@ -16,7 +16,7 @@
 
 #define CANID_API(id) ((id >> 10) & 0x3f)
 #define CANID_INDEX(id) ((id >> 6) & 0xf)
-#define CANID_DEVICE(id) (id & 0x3f)
+#define CANID_DEVICE(id) (id & 0x3f) 
 
 #define LED_COUNT 100
 
