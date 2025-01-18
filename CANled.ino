@@ -1,8 +1,6 @@
 #include <Adafruit_MCP2515.h>
 #include <Adafruit_NeoPixel.h>
 
-#include "../pixlib/src/include"
-
 #include <RPi_Pico_TimerInterrupt.h>
 
 #define CS_PIN PIN_CAN_CS
